@@ -1,8 +1,13 @@
 import random
+
+QUEENS = 8
+MAX_GENERATIONS = 100 
+POPULATION_SIZE = 30
+
 # Draw Board
 def draw_board(board):
-  for i in range(8):
-    for j in range(8):
+  for i in range(QUEENS):
+    for j in range(QUEENS):
       if board[i] == j:
         print('Q', end = ' ')
       else:
@@ -10,40 +15,39 @@ def draw_board(board):
     print()
   print()
 
+#actual fitness score (number of attacking pairs)
+def best_fitness():
+  return (QUEENS * (QUEENS - 1) // 2) - 1
+
 # Fitness Score ( Number of Non-Attacking Pairs )
 def fitness(board):
   # Highest fitness score (i.e. best solution) is 27 in this case
   score = 0
-  for i in range(8):
-    attacking_queens = 0
-    for j in range(i+1, 8): # i+1 cuz we don't want to compare the same queen again
-      if board[i] == board[j]:
-        attacking_queens += 1
-      if abs(board[i] - board[j]) == j - i:
-        attacking_queens += 1
-    non_attacking_queens = 7 - i - attacking_queens
-    score += non_attacking_queens 
+  for i in range(QUEENS): # is it queens or queens - 1? 
+    for j in range(i + 1, QUEENS): # i+1 cuz we don't want to compare the same queen again
+      if board[i] != board[j] and abs(board[i] - board[j]) != j - i: # if they are not in the same line and not in the same diagonal
+        score += 1
   return score
 
 # Crossover
 def crossover(board1, board2):
   # Randomly select a crossover point
-  crossover_point = random.randint(0, 7)
+  crossover_point = random.randint(0, QUEENS - 1)
   new_board = board1[:crossover_point] + board2[crossover_point:]
   new_board2 = board2[:crossover_point] + board1[crossover_point:]
   return new_board, new_board2
 
 # Mutation
-def mutation(board, board2):
+def mutation(board1, board2):
   # Randomly select a mutation point
-  mutation_point = random.randint(0, 7)
-  new_board = board[:] # copying board into new_board
-  new_board[mutation_point] = random.randint(0, 7)
+  mutation_point = random.randint(0, QUEENS - 1)
+  new_board1 = board1[:] # copying board1 into new_board
+  new_board1[mutation_point] = random.randint(0, QUEENS - 1)
   new_board2 = board2[:]
-  new_board2[mutation_point] = random.randint(0, 7)
-  return new_board, new_board2
+  new_board2[mutation_point] = random.randint(0, QUEENS - 1)
+  return new_board1, new_board2
 
-def generate_population(Population, P):
+def generate_population(Population):
   # Generate new population
   new_population = Population[:]
   # Selecting two boards from the population based on fitness
@@ -67,28 +71,27 @@ def generate_population(Population, P):
   new_population.append(new_board2)
   return new_population
 
-def eight_queens_problem(Population, P):
+def eight_queens_problem(Population):
   # Number of generations
-  G = 100
-  for i in range(G):
+  for i in range(MAX_GENERATIONS):
     for board in Population:
       #draw_board(board)
       print(fitness(board))
-      if fitness(board) == 27:
-        print("Solution Found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      if fitness(board) == best_fitness():
+        print("Solution Found :D")
         return board
-    Population = generate_population(Population, P)
+    Population = generate_population(Population)
     print("Generation: ", i)
     print(Population)
-  return "No Solution Found"
-  
-
+  return "No Solution Found :("
 
 # Generating Initial Population
-P = 10
 Population = []
-for i in range(P):
-  board = [random.randint(0, 7) for j in range(8)]
+for i in range(POPULATION_SIZE):
+  board = [random.randint(0, QUEENS - 1) for j in range(QUEENS)]
   Population.append(board)
 print(Population)
-print(eight_queens_problem(Population, P))
+print(eight_queens_problem(Population))
+# due to MAX_GENERATIONS and POPULATION_SIZE being small numbers, this algorithm rarely converges(its rare but it does), so increasing those numbers would help
+# another way would be to not remove the parents that produce offsprings like in this algo, or change the condition for mutation function or something of that sort
+# but Genetic Algos being completely random cause them to have this many iterations
