@@ -1,8 +1,8 @@
 import random
 
-QUEENS = 8
-MAX_GENERATIONS = 100 
-POPULATION_SIZE = 30
+QUEENS = 4
+MAX_GENERATIONS = 100
+POPULATION_SIZE = 4
 
 # Draw Board
 def draw_board(board):
@@ -15,15 +15,14 @@ def draw_board(board):
     print()
   print()
 
-#actual fitness score (number of attacking pairs)
+#actual fitness score of a board with N QUEENS ( Number of Attacking Pairs )
 def best_fitness():
-  return (QUEENS * (QUEENS - 1) // 2) - 1
+  return (QUEENS * (QUEENS - 1) // 2)
 
 # Fitness Score ( Number of Non-Attacking Pairs )
 def fitness(board):
-  # Highest fitness score (i.e. best solution) is 27 in this case
   score = 0
-  for i in range(QUEENS): # is it queens or queens - 1? 
+  for i in range(QUEENS): 
     for j in range(i + 1, QUEENS): # i+1 cuz we don't want to compare the same queen again
       if board[i] != board[j] and abs(board[i] - board[j]) != j - i: # if they are not in the same line and not in the same diagonal
         score += 1
@@ -47,15 +46,31 @@ def mutation(board1, board2):
   new_board2[mutation_point] = random.randint(0, QUEENS - 1)
   return new_board1, new_board2
 
-def generate_population(Population):
+def generate_population():
+  p = []
+  for i in range(POPULATION_SIZE):
+    board = [random.randint(0, QUEENS - 1) for j in range(QUEENS)]
+    p.append(board)
+  return p
+
+def generate_new_population(Population):
   # Generate new population
   new_population = Population[:]
   # Selecting two boards from the population based on fitness
   board1 = random.choices(Population, weights = [fitness(board) for board in Population])[0]
-  board2 = board1
-  # making sure board2 is different from board1
-  while board2 == board1:
-    board2 = random.choices(Population, weights = [fitness(board) for board in Population])[0]
+  # To avoid selecting the same board twice
+  Population_without_board1 = [board for board in Population if board != board1]
+  if Population_without_board1:
+    weights = [fitness(board) for board in Population_without_board1]
+    if sum(weights) > 0:
+      board2 = random.choices(Population_without_board1, weights=weights)[0]
+    else:
+      # If all weights are zero, select board2 randomly without considering the weights
+      board2 = random.choice(Population_without_board1)
+  else:
+    # Case where all boards in Population are equal to board1
+    raise ValueError("All boards in Population are the same")
+
   new_population.remove(board1)
   new_population.remove(board2)
   print("Choosing:  ",board1, fitness(board1), board2, fitness(board2))
@@ -75,23 +90,18 @@ def eight_queens_problem(Population):
   # Number of generations
   for i in range(MAX_GENERATIONS):
     for board in Population:
-      #draw_board(board)
-      print(fitness(board))
+      #print(fitness(board))
       if fitness(board) == best_fitness():
-        print("Solution Found :D")
+        print("\nSolution Found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        draw_board(board)
         return board
-    Population = generate_population(Population)
+    Population = generate_new_population(Population)
     print("Generation: ", i)
     print(Population)
-  return "No Solution Found :("
+  return "\nNo Solution Found"
 
 # Generating Initial Population
-Population = []
-for i in range(POPULATION_SIZE):
-  board = [random.randint(0, QUEENS - 1) for j in range(QUEENS)]
-  Population.append(board)
+Population = generate_population()
 print(Population)
-print(eight_queens_problem(Population))
-# due to MAX_GENERATIONS and POPULATION_SIZE being small numbers, this algorithm rarely converges(its rare but it does), so increasing those numbers would help
-# another way would be to not remove the parents that produce offsprings like in this algo, or change the condition for mutation function or something of that sort
-# but Genetic Algos being completely random cause them to have this many iterations
+print(eight_queens_problem(Population), "with a fitness of",best_fitness(), end='\n\n')
+
